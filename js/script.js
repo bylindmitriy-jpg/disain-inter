@@ -3,6 +3,21 @@ function scrollToContact() {
   document.getElementById('contact').scrollIntoView({ behavior: 'smooth' });
 }
 
+/* ===== ЗАГРУЗКА ЦЕН И ОБНОВЛЕНИЕ ПАКЕТОВ ===== */
+function loadPrices() {
+  const priceBasic = localStorage.getItem('priceBasic') || 15;
+  const priceFull = localStorage.getItem('priceFull') || 25;
+  const priceTurnkey = localStorage.getItem('priceTurnkey') || 35;
+
+  // Обновляем отображение цен на сайте
+  const priceCards = document.querySelectorAll('#quiz option[value="15"], #quiz option[value="25"], #quiz option[value="35"]');
+  if(priceCards.length) {
+    document.querySelector('#package option[value="15"]').text = `Базовый (${priceBasic}$ / м²)`;
+    document.querySelector('#package option[value="25"]').text = `Полный проект (${priceFull}$ / м²)`;
+    document.querySelector('#package option[value="35"]').text = `Под ключ (${priceTurnkey}$ / м²)`;
+  }
+}
+
 /* ===== КАЛЬКУЛЯТОР СТОИМОСТИ ===== */
 function calculatePrice() {
   const type = document.getElementById('type').value;
@@ -10,44 +25,34 @@ function calculatePrice() {
   const pack = parseFloat(document.getElementById('package').value);
   const resultBlock = document.getElementById('result');
 
-  if (!type) {
-    resultBlock.innerText = "Пожалуйста, выберите тип помещения";
-    return;
-  }
-
-  if (isNaN(area) || area <= 0) {
-    resultBlock.innerText = "Введите корректную площадь в м²";
-    return;
-  }
-
-  if (isNaN(pack)) {
-    resultBlock.innerText = "Выберите пакет услуг";
-    return;
-  }
+  if (!type) { resultBlock.innerText = "Выберите тип помещения"; return; }
+  if (isNaN(area) || area <= 0) { resultBlock.innerText = "Введите корректную площадь"; return; }
+  if (isNaN(pack)) { resultBlock.innerText = "Выберите пакет услуг"; return; }
 
   const total = Math.round(area * pack);
 
-  // Показываем пользователю
+  // Отображение результата пользователю
   resultBlock.innerHTML = `
-    Стоимость проекта для объекта <b>${type}</b><br>
-    Площадь: <b>${area} м²</b><br>
-    Пакет: <b>${pack}$ / м²</b><br><br>
-    <span style="font-size:20px;">Итого: <b>${total}$</b></span>
+    <p>Объект: <b>${type}</b></p>
+    <p>Площадь: <b>${area} м²</b></p>
+    <p>Пакет: <b>${pack}$ / м²</b></p>
+    <p style="font-size:20px;">Итого: <b>${total}$</b></p>
+    <button class="btn" onclick="scrollToContact()">Заказать проект</button>
   `;
 
-  // Отправляем расчёт в Telegram
+  // Отправка расчёта в Telegram
   sendQuizToTelegram(type, area, pack, total);
 }
 
-/* ===== ОТПРАВКА РАСЧЁТА В TELEGRAM ===== */
+/* ===== ОТПРАВКА В TELEGRAM ===== */
 function sendQuizToTelegram(type, area, pack, total) {
-  const text = `Новый расчёт стоимости:%0AТип: ${type}%0AПлощадь: ${area} м²%0AПакет: ${pack}$/м²%0AИтого: ${total}$`;
+  const text = `Новый расчёт:%0AТип: ${type}%0AПлощадь: ${area} м²%0AПакет: ${pack}$/м²%0AИтого: ${total}$`;
 
-  const botToken = "PASTE_BOT_TOKEN";
-  const chatId = "PASTE_CHAT_ID";
+  const botToken = "YOUR_BOT_TOKEN"; // вставь токен твоего бота
+  const chatId = "@Dmitriybyl"; // твой Telegram
 
   fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${text}`)
-    .catch(() => console.log('Ошибка отправки квиза'));
+    .catch(() => console.log('Ошибка отправки расчёта в Telegram'));
 }
 
 /* ===== ФОРМА ОБРАТНОЙ СВЯЗИ ===== */
@@ -60,52 +65,38 @@ document.getElementById('telegramForm').addEventListener('submit', function(e) {
 
   const text = `Новая заявка:%0AИмя: ${name}%0AТелефон: ${phone}%0AЗадача: ${message}`;
 
-  const botToken = "PASTE_BOT_TOKEN";
-  const chatId = "PASTE_CHAT_ID";
+  const botToken = "YOUR_BOT_TOKEN"; // вставь токен
+  const chatId = "@Dmitriybyl";
 
   fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${text}`)
-    .then(() => alert("Заявка отправлена! Мы скоро свяжемся с вами."))
-    .catch(() => alert("Ошибка отправки. Попробуйте позже."));
+    .then(() => alert("Заявка отправлена!"))
+    .catch(() => alert("Ошибка отправки"));
 });
 
-/* ===== АДМИНКА ===== */
+/* ===== АДМИНКА (опционально) ===== */
 function loginAdmin() {
-  if (document.getElementById('adminPass').value === 'admin123') {
+  if (document.getElementById('adminPass')?.value === 'admin123') {
     document.getElementById('adminControls').style.display = 'block';
-  } else {
-    alert('Неверный пароль');
-  }
+  } else alert('Неверный пароль');
 }
 
 function savePrices() {
   localStorage.setItem('priceBasic', document.getElementById('priceBasic').value);
   localStorage.setItem('priceFull', document.getElementById('priceFull').value);
   localStorage.setItem('priceTurnkey', document.getElementById('priceTurnkey').value);
-  alert('Цены сохранены');
+  alert('Сохранено');
   loadPrices();
 }
 
 function saveHeroTitle() {
-  const title = document.getElementById('heroTitleInput').value;
-  localStorage.setItem('heroTitle', title);
-  document.getElementById('heroTitle').innerText = title;
-  alert('Заголовок обновлён');
+  localStorage.setItem('heroTitle', document.getElementById('heroTitleInput').value);
+  document.querySelector('header h1').innerText = localStorage.getItem('heroTitle');
 }
 
-function loadPrices() {
-  const b = localStorage.getItem('priceBasic');
-  const f = localStorage.getItem('priceFull');
-  const t = localStorage.getItem('priceTurnkey');
-
-  if (b) document.getElementById('priceBasicText').innerHTML = `<strong>от ${b}$ / м²</strong>`;
-  if (f) document.getElementById('priceFullText').innerHTML = `<strong>от ${f}$ / м²</strong>`;
-  if (t) document.getElementById('priceTurnkeyText').innerHTML = `<strong>от ${t}$ / м²</strong>`;
-}
-
-/* ===== ЗАГРУЗКА СОХРАНЕННЫХ ДАННЫХ ===== */
+/* ===== ЗАГРУЗКА ПРИ ЗАПУСКЕ СТРАНИЦЫ ===== */
 window.onload = () => {
   if (localStorage.getItem('heroTitle')) {
-    document.getElementById('heroTitle').innerText = localStorage.getItem('heroTitle');
+    document.querySelector('header h1').innerText = localStorage.getItem('heroTitle');
   }
   loadPrices();
 };
